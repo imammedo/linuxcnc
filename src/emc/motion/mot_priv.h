@@ -246,19 +246,6 @@ extern struct emcmot_config_t *emcmotConfig;
 extern struct emcmot_internal_t *emcmotInternal;
 extern struct emcmot_error_t *emcmotError;
 
-
-// total number of joints (typically set with [KINS]JOINTS)
-#define ALL_JOINTS emcmotConfig->numJoints
-
-// number of kinematics-only joints:
-#define NO_OF_KINS_JOINTS (ALL_JOINTS - emcmotConfig->numExtraJoints)
-
-#define IS_EXTRA_JOINT(jno) (jno >= NO_OF_KINS_JOINTS)
-
-// 0-based Joint numbering:
-// kinematic-only jno.s: [0                 ... (NO_OF_KINS_JOINTS -1) ]
-// extrajoint     jno.s: [NO_OF_KINS_JOINTS ... (ALL_JOINTS  -1) ]
-
 /***********************************************************************
 *                    PUBLIC FUNCTION PROTOTYPES                        *
 ************************************************************************/

@@ -92,13 +92,6 @@ emcmot_joint_t *joints = 0;
 /* pointer to axis data */
 emcmot_axis_t *axes = 0;
 
-#ifndef STRUCTS_IN_SHMEM
-/* allocate array for joint data */
-emcmot_joint_t joint_array[EMCMOT_MAX_JOINTS];
-/* allocate array for axis data */
-emcmot_axis_t axis_array[EMCMOT_MAX_AXIS];
-#endif
-
 /*
   Principles of communication:
 
@@ -928,13 +921,8 @@ static int init_comm_buffers(void)
     emcmot_config_change();
 
     /* init pointer to joint structs */
-#ifdef STRUCTS_IN_SHMEM
     joints = &(emcmotInternal->joints[0]);
     axes = &(emcmotInternal->axes[0]);
-#else
-    joints = &(joint_array[0]);
-    axes = &(axis_array[0]);
-#endif
 
     for (spindle_num = 0; spindle_num < EMCMOT_MAX_SPINDLES; spindle_num++){
         emcmotStatus->spindle_status[spindle_num].scale = 1.0;

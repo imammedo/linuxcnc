@@ -57,17 +57,6 @@ to another.
 
 */
 
-/* the following line can be used to control where some of the
-   "internal" motion controller data is stored.  By default,
-   it is stored in staticlly allocated kernel memory.  However,
-   if STRUCTS_IN_SHMEM is defined, it will be stored in the
-   emcmotStruct shared memory area, for debugging purposes.
-*/
-
-#define STRUCTS_IN_SHMEM
-
-
-
 #ifndef MOTION_H
 #define MOTION_H
 
@@ -799,10 +788,8 @@ Suggestion: Split this in to an Error and a Status flag register..
 	int stepping;
 	int idForStep;
 
-#ifdef STRUCTS_IN_SHMEM
 	emcmot_joint_t joints[EMCMOT_MAX_JOINTS];	/* joint data */
 	emcmot_axis_t axes[EMCMOT_MAX_AXIS];	        /* axis data */
-#endif
 
 	double start_time;
 	double running_time;

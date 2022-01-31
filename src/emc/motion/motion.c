@@ -124,7 +124,6 @@ static int mot_comp_id;	/* component ID for motion module */
 /***********************************************************************
 *                   LOCAL FUNCTION PROTOTYPES                          *
 ************************************************************************/
-
 /* init_hal_io() exports HAL pins and parameters making data from
    the realtime control module visible and usable by the world
 */
@@ -146,8 +145,6 @@ static int export_spindle(int num, spindle_hal_t * addr);
 */
 static int init_comm_buffers(void);
 
-/* functions called by init_comm_buffers() */
-
 /* init_threads() creates realtime threads, exports functions to
    do the realtime control, and adds the functions to the threads.
 */
@@ -158,7 +155,7 @@ static int setTrajCycleTime(double secs);
 static int setServoCycleTime(double secs);
 
 static int module_intfc(void);
-
+static int tp_init(void);
 /***********************************************************************
 *                     PUBLIC FUNCTION CODE                             *
 ************************************************************************/
@@ -239,6 +236,29 @@ static int module_intfc() {
                ,joints
                );
 
+    tpMotFunctions(emcmotDioWrite
+                  ,emcmotAioWrite
+                  ,emcmotSetRotaryUnlock
+                  ,emcmotGetRotaryIsUnlocked
+                  );
+
+    tpMotData(emcmotStatus
+             ,emcmotConfig
+             );
+    return 0;
+}
+
+static int tp_init() {
+    if (-1 == tpCreate(&emcmotInternal->coord_tp, DEFAULT_TC_QUEUE_SIZE,mot_comp_id)) {
+        rtapi_print_msg(RTAPI_MSG_ERR,
+            "MOTION: tpCreate failed\n");
+        return -1;
+    }
+    // tpInit is called from tpCreate
+    tpSetCycleTime(&emcmotInternal->coord_tp,  emcmotConfig->trajCycleTime);
+    tpSetVmax(     &emcmotInternal->coord_tp,  emcmotStatus->vel, emcmotStatus->vel);
+    tpSetAmax(     &emcmotInternal->coord_tp,  emcmotStatus->acc);
+    tpSetPos(      &emcmotInternal->coord_tp, &emcmotStatus->carte_pos_cmd);
     return 0;
 }
 
@@ -359,9 +379,13 @@ int rtapi_app_main(void)
 	hal_exit(mot_comp_id);
 	return -1;
     }
-
+    
     if (module_intfc()) {
 	rtapi_print_msg(RTAPI_MSG_ERR, _("MOTION: module_intfc() failed\n"));
+	return -1;
+    }
+    if (tp_init()) {
+	rtapi_print_msg(RTAPI_MSG_ERR, _("MOTION: tp_init() failed\n"));
 	return -1;
     }
 
@@ -632,7 +656,6 @@ static int init_hal_io(void)
             return -1;
         }
     }
-
     /* export joint pins and parameters */
     for (n = 0; n < num_joints; n++) {
 	joint_data = &(emcmot_hal_data->joint[n]);
@@ -647,7 +670,6 @@ static int init_hal_io(void)
 	/* We'll init the index model to EXT_ENCODER_INDEX_MODEL_RAW for now,
 	   because it is always supported. */
     }
-
     /* export joint pins and parameters */
     for (n = 0; n < num_extrajoints; n++) {
         ejoint_data = &(emcmot_hal_data->ejoint[n]);
@@ -906,7 +928,7 @@ static int init_comm_buffers(void)
     emcmotInternal->split = 0;
     emcmotStatus->heartbeat = 0;
 
-    ALL_JOINTS                 = num_joints;      // emcmotConfig->numJoints from [KINS]JOINTS
+    ALL_JOINTS                   = num_joints;      // emcmotConfig->numJoints from [KINS]JOINTS
     emcmotConfig->numExtraJoints = num_extrajoints; // from motmod num_extrajoints=
     emcmotStatus->numExtraJoints = num_extrajoints;
 
@@ -938,9 +960,9 @@ static int init_comm_buffers(void)
     emcmotConfig->kinType = kinematicsType();
     emcmot_config_change();
 
-    /* init pointer to joint structs */
-    joints = &(emcmotInternal->joints[0]);
-    axes = &(emcmotInternal->axes[0]);
+    /* init pointer to joints and axes structs */
+    joints = &(emcmotStatus->joints[0]);
+    axes   = &(emcmotStatus->axes[0]);
 
     for (spindle_num = 0; spindle_num < EMCMOT_MAX_SPINDLES; spindle_num++){
         emcmotStatus->spindle_status[spindle_num].scale = 1.0;
@@ -1007,25 +1029,6 @@ static int init_comm_buffers(void)
 	/* init internal info */
 	cubicInit(&(joint->cubic));
     }
-
-    /*! \todo FIXME-- add emcmotError */
-
-    emcmotInternal->cur_time = emcmotInternal->last_time = 0.0;
-    emcmotInternal->start_time = etime();
-    emcmotInternal->running_time = 0.0;
-
-    /* init motion emcmotInternal->coord_tp */
-    if (-1 == tpCreate(&emcmotInternal->coord_tp, DEFAULT_TC_QUEUE_SIZE,
-	    emcmotInternal->queueTcSpace)) {
-	rtapi_print_msg(RTAPI_MSG_ERR,
-	    "MOTION: failed to create motion emcmotInternal->coord_tp\n");
-	return -1;
-    }
-//    tpInit(&emcmotInternal->coord_tp); // tpInit called from tpCreate
-    tpSetCycleTime(&emcmotInternal->coord_tp, emcmotConfig->trajCycleTime);
-    tpSetPos(&emcmotInternal->coord_tp, &emcmotStatus->carte_pos_cmd);
-    tpSetVmax(&emcmotInternal->coord_tp, emcmotStatus->vel, emcmotStatus->vel);
-    tpSetAmax(&emcmotInternal->coord_tp, emcmotStatus->acc);
 
     emcmotStatus->tail = 0;
 

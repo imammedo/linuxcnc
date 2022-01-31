@@ -27,7 +27,6 @@
 #include "mot_priv.h"
 #include "rtapi_math.h"
 #include "tp.h"
-#include "tc.h"
 #include "simple_tp.h"
 #include "config.h"
 #include "motion_types.h"
@@ -259,6 +258,7 @@ void emcmotController(void *arg, long period)
         && do_homing()) {
         switch_to_teleop_mode();
     }
+
     get_pos_cmds(period);
     compute_screw_comp();
     plan_external_offsets();
@@ -2269,11 +2269,11 @@ static void update_status(void)
     emcmotStatus->queueFull = tcqFull(&emcmotInternal->coord_tp.queue);
 
     /* check to see if we should pause in order to implement
-       single emcmotInternal->stepping */
+       single emcmotStatus->stepping */
 
-    if (emcmotInternal->stepping && emcmotInternal->idForStep != emcmotStatus->id) {
+    if (emcmotStatus->stepping && emcmotInternal->idForStep != emcmotStatus->id) {
       tpPause(&emcmotInternal->coord_tp);
-      emcmotInternal->stepping = 0;
+      emcmotStatus->stepping = 0;
       emcmotStatus->paused = 1;
     }
 #ifdef WATCH_FLAGS

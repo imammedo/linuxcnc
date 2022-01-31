@@ -12,11 +12,11 @@
 ********************************************************************/
 #include "rtapi.h"              /* rtapi_print_msg */
 #include "posemath.h"           /* Geometry types & functions */
-#include "tc.h"
-#include "tp.h"
 #include "emcpose.h"
 #include "rtapi_math.h"
-#include "mot_priv.h"
+#include "motion.h"
+#include "tp.h"
+#include "tc.h"
 #include "motion_types.h"
 #include "spherical_arc.h"
 #include "blendmath.h"
@@ -44,9 +44,37 @@
 
 #define TP_OPTIMIZATION_LAZY
 
-extern emcmot_status_t *emcmotStatus;
-extern emcmot_internal_t *emcmotInternal;
-extern emcmot_config_t *emcmotConfig;
+static emcmot_status_t *emcmotStatus;
+static emcmot_config_t *emcmotConfig;
+
+//==========================================================
+// tp module interface
+// motmod function ptrs for functions called by tp:
+static void(*DioWrite)(int,char);
+static void(*AioWrite)(int,double);
+static void(*SetRotaryUnlock)(int,int);
+static int (*GetRotaryIsUnlocked)(int);
+
+void tpMotFunctions(void(*pDioWrite)(int,char)
+                   ,void(*pAioWrite)(int,double)
+                   ,void(*pSetRotaryUnlock)(int,int)
+                   ,int (*pGetRotaryIsUnlocked)(int)
+                   )
+{
+    DioWrite            = *pDioWrite;
+    AioWrite            = *pAioWrite;
+    SetRotaryUnlock     = *pSetRotaryUnlock;
+    GetRotaryIsUnlocked = *pGetRotaryIsUnlocked;
+}
+
+void tpMotData(emcmot_status_t *pstatus
+              ,emcmot_config_t *pconfig
+              )
+{
+    emcmotStatus = pstatus;
+    emcmotConfig = pconfig;
+}
+//=========================================================
 
 /** static function primitives (ugly but less of a pain than moving code around)*/
 STATIC int tpComputeBlendVelocity(
@@ -128,15 +156,14 @@ STATIC double tpGetTangentKinkRatio(void) {
     return fmax(fmin(emcmotConfig->arcBlendTangentKinkRatio,max_ratio),min_ratio);
 }
 
-
 STATIC int tpGetMachineAccelBounds(PmCartesian  * const acc_bound) {
     if (!acc_bound) {
         return TP_ERR_FAIL;
     }
 
-    acc_bound->x = emcmotInternal->axes[0].acc_limit; //0==>x
-    acc_bound->y = emcmotInternal->axes[1].acc_limit; //1==>y
-    acc_bound->z = emcmotInternal->axes[2].acc_limit; //2==>z
+    acc_bound->x = emcmotStatus->axes[0].acc_limit; //0==>x
+    acc_bound->y = emcmotStatus->axes[1].acc_limit; //1==>y
+    acc_bound->z = emcmotStatus->axes[2].acc_limit; //2==>z
     return TP_ERR_OK;
 }
 
@@ -146,9 +173,9 @@ STATIC int tpGetMachineVelBounds(PmCartesian  * const vel_bound) {
         return TP_ERR_FAIL;
     }
 
-    vel_bound->x = emcmotInternal->axes[0].vel_limit; //0==>x
-    vel_bound->y = emcmotInternal->axes[1].vel_limit; //1==>y
-    vel_bound->z = emcmotInternal->axes[2].vel_limit; //2==>z
+    vel_bound->x = emcmotStatus->axes[0].vel_limit; //0==>x
+    vel_bound->y = emcmotStatus->axes[1].vel_limit; //1==>y
+    vel_bound->z = emcmotStatus->axes[2].vel_limit; //2==>z
     return TP_ERR_OK;
 }
 
@@ -271,7 +298,8 @@ STATIC inline double tpGetRealFinalVel(TP_STRUCT const * const tp,
     /* If we're stepping, then it doesn't matter what the optimization says, we want to end at a stop.
      * If the term_cond gets changed out from under us, detect this and force final velocity to zero
      */
-    if (emcmotInternal->stepping || tc->term_cond != TC_TERM_COND_TANGENT || tp->reverse_run) {
+
+    if (emcmotStatus->stepping || tc->term_cond != TC_TERM_COND_TANGENT || tp->reverse_run) {
         return 0.0;
     } 
     
@@ -307,10 +335,16 @@ STATIC inline double tpGetSignedSpindlePosition(spindle_status_t *status) {
  * @section tpaccess tp class-like API
  */
 
+/* space for trajectory planner queues, plus 10 more for safety */
+/*! \todo FIXME-- default is used; dynamic is not honored */
+	TC_STRUCT queueTcSpace[DEFAULT_TC_QUEUE_SIZE + 10];
+
 /**
  * Create the trajectory planner structure with an empty queue.
  */
-int tpCreate(TP_STRUCT * const tp, int _queueSize, TC_STRUCT * const tcSpace)
+
+
+int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
 {
     if (0 == tp) {
         return TP_ERR_FAIL;
@@ -321,12 +355,13 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize, TC_STRUCT * const tcSpace)
     } else {
         tp->queueSize = _queueSize;
     }
+    TC_STRUCT * const tcSpace = queueTcSpace;
 
     /* create the queue */
     if (-1 == tcqCreate(&tp->queue, tp->queueSize, tcSpace)) {
         return TP_ERR_FAIL;
     }
-
+    
     /* init the rest of our data */
     return tpInit(tp);
 }
@@ -385,7 +420,9 @@ int tpClear(TP_STRUCT * const tp)
     emcmotStatus->requested_vel = 0.0;
     emcmotStatus->distance_to_go = 0.0;
     ZERO_EMC_POSE(emcmotStatus->dtg);
-    SET_MOTION_INPOS_FLAG(1);
+
+    // equivalent to: SET_MOTION_INPOS_FLAG(1):
+    emcmotStatus->motionFlag |= EMCMOT_MOTION_INPOS_BIT;
 
     return tpClearDIOs(tp);
 }
@@ -405,6 +442,10 @@ int tpInit(TP_STRUCT * const tp)
     tp->aLimit = 0.0;
     PmCartesian acc_bound;
     //FIXME this acceleration bound isn't valid (nor is it used)
+    if (emcmotStatus == 0) {
+       rtapi_print("!!!tpInit: NULL emcmotStatus, bye\n\n");
+       return -1;
+    }
     tpGetMachineAccelBounds(&acc_bound);
     tpGetMachineActiveLimit(&tp->aMax, &acc_bound);
     //Angular limits
@@ -2393,12 +2434,12 @@ void tpToggleDIOs(TC_STRUCT * const tc) {
     if (tc->syncdio.anychanged != 0) { // we have DIO's to turn on or off
         for (i=0; i < emcmotConfig->numDIO; i++) {
             if (!(tc->syncdio.dio_mask & (1 << i))) continue;
-            if (tc->syncdio.dios[i] > 0) emcmotDioWrite(i, 1); // turn DIO[i] on
-            if (tc->syncdio.dios[i] < 0) emcmotDioWrite(i, 0); // turn DIO[i] off
+            if (tc->syncdio.dios[i] > 0) DioWrite(i, 1); // turn DIO[i] on
+            if (tc->syncdio.dios[i] < 0) DioWrite(i, 0); // turn DIO[i] off
         }
         for (i=0; i < emcmotConfig->numAIO; i++) {
             if (!(tc->syncdio.aio_mask & (1 << i))) continue;
-            emcmotAioWrite(i, tc->syncdio.aios[i]); // set AIO[i]
+            AioWrite(i, tc->syncdio.aios[i]); // set AIO[i]
         }
         tc->syncdio.anychanged = 0; //we have turned them all on/off, nothing else to do for this TC the next time
     }
@@ -2589,12 +2630,12 @@ STATIC void tpHandleEmptyQueue(TP_STRUCT * const tp)
 
 /** Wrapper function to unlock rotary axes */
 STATIC void tpSetRotaryUnlock(int axis, int unlock) {
-    emcmotSetRotaryUnlock(axis, unlock);
+    SetRotaryUnlock(axis, unlock);
 }
 
 /** Wrapper function to check rotary axis lock */
 STATIC int tpGetRotaryIsUnlocked(int axis) {
-    return emcmotGetRotaryIsUnlocked(axis);
+    return GetRotaryIsUnlocked(axis);
 }
 
 
@@ -2626,9 +2667,8 @@ STATIC int tpCompleteSegment(TP_STRUCT * const tp,
         tpSetRotaryUnlock(tc->indexer_jnum, 0);
         // if it is now locked, fall through and remove the finished move.
         // otherwise, just come back later and check again
-        if(tpGetRotaryIsUnlocked(tc->indexer_jnum)) {
+        if(tpGetRotaryIsUnlocked(tc->indexer_jnum))
             return TP_ERR_FAIL;
-        }
     }
 
     //Clear status flags associated since segment is done
@@ -2806,8 +2846,9 @@ STATIC tp_err_t tpActivateSegment(TP_STRUCT * const tp, TC_STRUCT * const tc) {
         tpSetRotaryUnlock(tc->indexer_jnum, 1);
         // if it is unlocked, fall through and start the move.
         // otherwise, just come back later and check again
-        if (!tpGetRotaryIsUnlocked(tc->indexer_jnum))
+        if (!tpGetRotaryIsUnlocked(tc->indexer_jnum)) {
             return TP_ERR_WAITING;
+        }
     }
 
     // Temporary debug message
@@ -3558,6 +3599,3 @@ int tpIsMoving(TP_STRUCT const * const tp)
     }
     return false;
 }
-
-
-// vim:sw=4:sts=4:et:

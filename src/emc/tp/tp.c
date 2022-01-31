@@ -3650,4 +3650,38 @@ int tpIsMoving(TP_STRUCT const * const tp)
     return false;
 }
 
+// api: functions called by motion:
+EXPORT_SYMBOL(tpMotFunctions);
+EXPORT_SYMBOL(tpMotData);
+
+EXPORT_SYMBOL(tpAbort);
+EXPORT_SYMBOL(tpActiveDepth);
+EXPORT_SYMBOL(tpAddCircle);
+EXPORT_SYMBOL(tpAddLine);
+EXPORT_SYMBOL(tpAddRigidTap);
+EXPORT_SYMBOL(tpClear);
+EXPORT_SYMBOL(tpCreate);
+EXPORT_SYMBOL(tpGetExecId);
+EXPORT_SYMBOL(tpGetExecTag);
+EXPORT_SYMBOL(tpGetMotionType);
+EXPORT_SYMBOL(tpGetPos);
+EXPORT_SYMBOL(tpIsDone);
+EXPORT_SYMBOL(tpPause);
+EXPORT_SYMBOL(tpQueueDepth);
+EXPORT_SYMBOL(tpResume);
+EXPORT_SYMBOL(tpRunCycle);
+EXPORT_SYMBOL(tpSetAmax);
+EXPORT_SYMBOL(tpSetAout);
+EXPORT_SYMBOL(tpSetCycleTime);
+EXPORT_SYMBOL(tpSetDout);
+EXPORT_SYMBOL(tpSetId);
+EXPORT_SYMBOL(tpSetPos);
+EXPORT_SYMBOL(tpSetRunDir);
+EXPORT_SYMBOL(tpSetSpindleSync);
+EXPORT_SYMBOL(tpSetTermCond);
+EXPORT_SYMBOL(tpSetVlimit);
+EXPORT_SYMBOL(tpSetVmax);
+
+EXPORT_SYMBOL(tcqFull);
+
 #undef MAKE_TP_HAL_PINS

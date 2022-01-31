@@ -157,6 +157,8 @@ static int init_threads(void);
 static int setTrajCycleTime(double secs);
 static int setServoCycleTime(double secs);
 
+static int module_intfc(void);
+
 /***********************************************************************
 *                     PUBLIC FUNCTION CODE                             *
 ************************************************************************/
@@ -229,11 +231,22 @@ int count_names(char *names[]){
   return namecount;
 }
 
+static int module_intfc() {
+    homeMotFunctions(emcmotSetRotaryUnlock
+                    ,emcmotGetRotaryIsUnlocked
+                    );
+    homeMotData(emcmotConfig
+               ,joints
+               );
+
+    return 0;
+}
+
 int rtapi_app_main(void)
 {
     int retval;
 
-    rtapi_print_msg(RTAPI_MSG_INFO, "MOTION: init_module() starting...\n");
+    rtapi_print_msg(RTAPI_MSG_INFO, "MOTION: rtapi_app_main() starting...\n");
 
     /* connect to the HAL and RTAPI */
     mot_comp_id = hal_init("motmod");
@@ -347,6 +360,11 @@ int rtapi_app_main(void)
 	return -1;
     }
 
+    if (module_intfc()) {
+	rtapi_print_msg(RTAPI_MSG_ERR, _("MOTION: module_intfc() failed\n"));
+	return -1;
+    }
+
     /* set up for realtime execution of code */
     retval = init_threads();
     if (retval != 0) {
@@ -355,7 +373,13 @@ int rtapi_app_main(void)
 	return -1;
     }
 
-    rtapi_print_msg(RTAPI_MSG_INFO, "MOTION: init_module() complete\n");
+    if (homing_init(mot_comp_id, num_joints)) {
+	rtapi_print_msg(RTAPI_MSG_ERR, _("MOTION: homing_init() failed\n"));
+	hal_exit(mot_comp_id);
+	return -1;
+    }
+
+    rtapi_print_msg(RTAPI_MSG_INFO, "MOTION: rtapi_app_main() complete\n");
 
     hal_ready(mot_comp_id);
 
@@ -624,12 +648,6 @@ static int init_hal_io(void)
 	   because it is always supported. */
     }
 
-    /* export joint home pins (assigned to motion comp)*/
-    retval = export_joint_home_pins(num_joints,mot_comp_id);
-    if (retval != 0) {
-        rtapi_print_msg(RTAPI_MSG_ERR, _("MOTION: export_joint_home_pins failed\n"));
-        return -1;
-    }
     /* export joint pins and parameters */
     for (n = 0; n < num_extrajoints; n++) {
         ejoint_data = &(emcmot_hal_data->ejoint[n]);
@@ -989,8 +1007,6 @@ static int init_comm_buffers(void)
 	/* init internal info */
 	cubicInit(&(joint->cubic));
     }
-
-	homing_init();  // for all joints
 
     /*! \todo FIXME-- add emcmotError */
 

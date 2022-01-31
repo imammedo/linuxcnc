@@ -15,9 +15,9 @@
 #include "rtapi_string.h"       /* memset */
 #include "hal.h"		/* decls for HAL implementation */
 #include "motion.h"
-#include "motion_debug.h"
 #include "motion_struct.h"
 #include "mot_priv.h"
+#include "tp.h"
 #include "rtapi_math.h"
 #include "homing.h"
 
@@ -116,7 +116,7 @@ emcmot_struct_t *emcmotStruct = 0;
 struct emcmot_command_t *emcmotCommand = 0;
 struct emcmot_status_t *emcmotStatus = 0;
 struct emcmot_config_t *emcmotConfig = 0;
-struct emcmot_debug_t *emcmotDebug = 0;
+struct emcmot_internal_t *emcmotInternal = 0;
 struct emcmot_error_t *emcmotError = 0;	/* unused for RT_FIFO */
 
 /***********************************************************************
@@ -187,8 +187,8 @@ void switch_to_teleop_mode(void) {
         if (joint != 0) { joint->free_tp.enable = 0; }
     }
 
-    emcmotDebug->teleoperating = 1;
-    emcmotDebug->coordinating  = 0;
+    emcmotInternal->teleoperating = 1;
+    emcmotInternal->coordinating  = 0;
 }
 
 
@@ -840,7 +840,7 @@ static int init_comm_buffers(void)
     rtapi_print_msg(RTAPI_MSG_INFO, "MOTION: init_comm_buffers() starting...\n");
 
     emcmotStruct = 0;
-    emcmotDebug = 0;
+    emcmotInternal = 0;
     emcmotStatus = 0;
     emcmotCommand = 0;
     emcmotConfig = 0;
@@ -866,7 +866,7 @@ static int init_comm_buffers(void)
     emcmotCommand = &emcmotStruct->command;
     emcmotStatus = &emcmotStruct->status;
     emcmotConfig = &emcmotStruct->config;
-    emcmotDebug = &emcmotStruct->debug;
+    emcmotInternal = &emcmotStruct->internal;
     emcmotError = &emcmotStruct->error;
 
     /* init error struct */
@@ -885,14 +885,14 @@ static int init_comm_buffers(void)
     emcmotStatus->commandStatus = 0;
 
     /* init more stuff */
-    emcmotDebug->head = 0;
+    emcmotInternal->head = 0;
     emcmotConfig->head = 0;
 
     emcmotStatus->motionFlag = 0;
     SET_MOTION_ERROR_FLAG(0);
     SET_MOTION_COORD_FLAG(0);
     SET_MOTION_TELEOP_FLAG(0);
-    emcmotDebug->split = 0;
+    emcmotInternal->split = 0;
     emcmotStatus->heartbeat = 0;
 
     ALL_JOINTS                 = num_joints;      // emcmotConfig->numJoints from [KINS]JOINTS
@@ -929,8 +929,8 @@ static int init_comm_buffers(void)
 
     /* init pointer to joint structs */
 #ifdef STRUCTS_IN_SHMEM
-    joints = &(emcmotDebug->joints[0]);
-    axes = &(emcmotDebug->axes[0]);
+    joints = &(emcmotInternal->joints[0]);
+    axes = &(emcmotInternal->axes[0]);
 #else
     joints = &(joint_array[0]);
     axes = &(axis_array[0]);
@@ -1006,22 +1006,22 @@ static int init_comm_buffers(void)
 
     /*! \todo FIXME-- add emcmotError */
 
-    emcmotDebug->cur_time = emcmotDebug->last_time = 0.0;
-    emcmotDebug->start_time = etime();
-    emcmotDebug->running_time = 0.0;
+    emcmotInternal->cur_time = emcmotInternal->last_time = 0.0;
+    emcmotInternal->start_time = etime();
+    emcmotInternal->running_time = 0.0;
 
-    /* init motion emcmotDebug->coord_tp */
-    if (-1 == tpCreate(&emcmotDebug->coord_tp, DEFAULT_TC_QUEUE_SIZE,
-	    emcmotDebug->queueTcSpace)) {
+    /* init motion emcmotInternal->coord_tp */
+    if (-1 == tpCreate(&emcmotInternal->coord_tp, DEFAULT_TC_QUEUE_SIZE,
+	    emcmotInternal->queueTcSpace)) {
 	rtapi_print_msg(RTAPI_MSG_ERR,
-	    "MOTION: failed to create motion emcmotDebug->coord_tp\n");
+	    "MOTION: failed to create motion emcmotInternal->coord_tp\n");
 	return -1;
     }
-//    tpInit(&emcmotDebug->coord_tp); // tpInit called from tpCreate
-    tpSetCycleTime(&emcmotDebug->coord_tp, emcmotConfig->trajCycleTime);
-    tpSetPos(&emcmotDebug->coord_tp, &emcmotStatus->carte_pos_cmd);
-    tpSetVmax(&emcmotDebug->coord_tp, emcmotStatus->vel, emcmotStatus->vel);
-    tpSetAmax(&emcmotDebug->coord_tp, emcmotStatus->acc);
+//    tpInit(&emcmotInternal->coord_tp); // tpInit called from tpCreate
+    tpSetCycleTime(&emcmotInternal->coord_tp, emcmotConfig->trajCycleTime);
+    tpSetPos(&emcmotInternal->coord_tp, &emcmotStatus->carte_pos_cmd);
+    tpSetVmax(&emcmotInternal->coord_tp, emcmotStatus->vel, emcmotStatus->vel);
+    tpSetAmax(&emcmotInternal->coord_tp, emcmotStatus->acc);
 
     emcmotStatus->tail = 0;
 
@@ -1148,7 +1148,7 @@ static int setTrajCycleTime(double secs)
         emcmotConfig->interpolationRate = 1;
 
     /* set traj planner */
-    tpSetCycleTime(&emcmotDebug->coord_tp, secs);
+    tpSetCycleTime(&emcmotInternal->coord_tp, secs);
 
     /* set the free planners, cubic interpolation rate and segment time */
     for (t = 0; t < ALL_JOINTS; t++) {

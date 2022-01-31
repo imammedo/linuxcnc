@@ -243,7 +243,7 @@ extern struct emcmot_struct_t *emcmotStruct;
 extern struct emcmot_command_t *emcmotCommand;
 extern struct emcmot_status_t *emcmotStatus;
 extern struct emcmot_config_t *emcmotConfig;
-extern struct emcmot_debug_t *emcmotDebug;
+extern struct emcmot_internal_t *emcmotInternal;
 extern struct emcmot_error_t *emcmotError;
 
 

@@ -619,7 +619,7 @@ static void do_forward_kins(void)
     case KINEMATICS_IDENTITY:
 	kinematicsForward(joint_pos, &emcmotStatus->carte_pos_fb, &fflags,
 	    &iflags);
-	if (checkAllHomed()) {
+	if (get_allhomed()) {
 	    emcmotStatus->carte_pos_fb_ok = 1;
 	} else {
 	    emcmotStatus->carte_pos_fb_ok = 0;
@@ -627,7 +627,7 @@ static void do_forward_kins(void)
 	break;
 
     case KINEMATICS_BOTH:
-	if (checkAllHomed()) {
+	if (get_allhomed()) {
 	    /* is previous value suitable for use as initial guess? */
 	    if (!emcmotStatus->carte_pos_fb_ok) {
 		/* no, use home position as initial guess */
@@ -1361,7 +1361,7 @@ static void get_pos_cmds(long period)
 
 	case KINEMATICS_IDENTITY:
 	    kinematicsForward(positions, &emcmotStatus->carte_pos_cmd, &fflags, &iflags);
-	    if (checkAllHomed()) {
+	    if (get_allhomed()) {
 		emcmotStatus->carte_pos_cmd_ok = 1;
 	    } else {
 		emcmotStatus->carte_pos_cmd_ok = 0;
@@ -1369,7 +1369,7 @@ static void get_pos_cmds(long period)
 	    break;
 
 	case KINEMATICS_BOTH:
-	    if (checkAllHomed()) {
+	    if (get_allhomed()) {
 		/* is previous value suitable for use as initial guess? */
 		if (!emcmotStatus->carte_pos_cmd_ok) {
 		    /* no, use home position as initial guess */
@@ -2420,7 +2420,7 @@ static void plan_external_offsets(void)
             continue;
         }
         if ( delta == 0 )                { continue; }
-        if ( !checkAllHomed() )          { continue; }
+        if ( !get_allhomed() )           { continue; }
         if ( !GET_MOTION_ENABLE_FLAG() ) { continue; }
 
         axis->ext_offset_tp.pos_cmd   += delta *  *(axis_data->eoffset_scale);

@@ -77,6 +77,7 @@ extern void set_joint_at_home(int jno, bool value);
 // overall status:
 extern home_sequence_state_t get_home_sequence_state(void);
 extern bool get_homing_is_active(void);
+extern bool get_allhomed(void);
 
 // per-joint information:
 extern int  get_home_sequence(int jno);

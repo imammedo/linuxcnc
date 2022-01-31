@@ -169,7 +169,7 @@ void switch_to_teleop_mode(void) {
     emcmot_joint_t *joint;
 
     if (emcmotConfig->kinType != KINEMATICS_IDENTITY) {
-        if (!checkAllHomed()) {
+        if (!get_allhomed()) {
             reportError(_("all joints must be homed before going into teleop mode"));
             return;
         }

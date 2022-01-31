@@ -77,27 +77,6 @@ extern int motion_num_spindles;
 
 static int rehomeAll;
 
-/* loops through the active joints and checks if any are not homed */
-bool checkAllHomed(void)
-{
-    int joint_num;
-    emcmot_joint_t *joint;
-
-    for (joint_num = 0; joint_num < ALL_JOINTS; joint_num++) {
-	joint = &joints[joint_num];
-	if (!GET_JOINT_ACTIVE_FLAG(joint)) {
-	    /* if joint is not active, don't even look at its limits */
-	    continue;
-	}
-	if (!get_homed(joint_num) ) {
-	    /* if any of the joints is not homed return false */
-	    return 0;
-	}
-    }
-    /* return true if all active joints are homed*/
-    return 1;
-}
-
 /* limits_ok() returns 1 if none of the hard limits are set,
    0 if any are set. Called on a linear and circular move. */
 STATIC int limits_ok(void)
@@ -632,7 +611,7 @@ void emcmotCommandHandler(void *arg, long servo_period)
 	    emcmotInternal->coordinating = 1;
 	    emcmotInternal->teleoperating = 0;
 	    if (emcmotConfig->kinType != KINEMATICS_IDENTITY) {
-		if (!checkAllHomed()) {
+		if (!get_allhomed()) {
 		    reportError
 			(_("all joints must be homed before going into coordinated mode"));
 		    emcmotInternal->coordinating = 0;

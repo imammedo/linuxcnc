@@ -340,6 +340,25 @@ bool get_homing_is_active() {
     return homing_active;
 }
 
+bool get_allhomed() {
+    int joint_num;
+    emcmot_joint_t *joint;
+
+    for (joint_num = 0; joint_num < ALL_JOINTS; joint_num++) {
+        joint = &joints[joint_num];
+        if (!GET_JOINT_ACTIVE_FLAG(joint)) {
+            /* if joint is not active, don't even look at its limits */
+            continue;
+        }
+        if (!get_homed(joint_num) ) {
+            /* if any of the joints is not homed return false */
+            return 0;
+        }
+    }
+    /* return true if all active joints are homed*/
+    return 1;
+}
+
 int get_home_sequence(int jno) {
     return H[jno].home_sequence;
 }
@@ -1237,7 +1256,7 @@ void do_homing(void)
                 // This joint just finished homing.  See if this is the
                 // final one and all joints are now homed, and switch to
                 // Teleop mode if so.
-                if (checkAllHomed()) { // Note: not in homing api
+                if (get_allhomed()) { // Note: not in homing api
                     switch_to_teleop_mode();
                     homing_flag = 0;
                 }

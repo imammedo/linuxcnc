@@ -703,7 +703,7 @@ class _Lcnc_Action(object):
     def SET_ERROR_MESSAGE(self, msg):
         self.cmd.error_msg(msg)
 
-    def TOUCHPLATE_TOUCHOFF(self, search_vel, probe_vel, max_probe, z_offset):
+    def TOUCHPLATE_TOUCHOFF(self, search_vel, probe_vel, max_probe, z_offset, latch_return, z_clearance):
         if self.proc is not None:
             return 0
         self.proc = QProcess()
@@ -714,10 +714,12 @@ class _Lcnc_Action(object):
         self.proc.finished.connect(self.touchoff_finished)
         self.proc.start('python3 {}'.format(TOUCHPLATE_SUBPROGRAM))
         # probe
-        string_to_send = "probe_down${}${}${}${}\n".format(str(search_vel),
+        string_to_send = "probe_down${}${}${}${}${}${}\n".format(str(search_vel),
                                         str(probe_vel),
                                         str(max_probe),
-                                        str(z_offset))
+                                        str(z_offset),
+                                        str(latch_return),
+                                        str(z_clearance))
         self.proc.writeData(bytes(string_to_send, 'utf-8'))
         return 1
 

@@ -16,6 +16,9 @@ class TouchOffSubprog(QObject):
         self.probe_vel = 10.0
         self.max_travel = 10.0
         self.z_offset = 0
+        self.z_clearance = 4
+        self.latch_return = 1
+        self.probe_distance = self.latch_return + 0.4
         self.process()
 
     def process(self):
@@ -46,6 +49,9 @@ class TouchOffSubprog(QObject):
         self.probe_vel = float(cmd[2])
         self.max_travel = float(cmd[3])
         self.z_offset = float(cmd[4])
+        self.z_clearance = float(cmd[6])
+        self.latch_return = float(cmd[5])
+        self.probe_distance = self.latch_return + 0.4
         error = self.probe_down()
         if error != 1 and STATUS.is_on_and_idle():
             ACTION.CALL_MDI("G90")
@@ -60,17 +66,18 @@ class TouchOffSubprog(QObject):
         if ACTION.CALL_MDI_WAIT(command, 10) == -1:
             ACTION.CALL_MDI('M72')
             return 0
-        if ACTION.CALL_MDI_WAIT("G1 Z4.0") == -1:
+        command = "G1 Z{}".format(self.latch_return)
+        if ACTION.CALL_MDI_WAIT(command) == -1:
             ACTION.CALL_MDI('M72')
             return 0
         ACTION.CALL_MDI("G4 P0.5")
-        command = "G38.2 Z-4.4 F{}".format(self.probe_vel)
+        command = "G38.2 Z-{} F{}".format(self.probe_distance, self.probe_vel)
         if ACTION.CALL_MDI_WAIT(command, 10) == -1:
             ACTION.CALL_MDI('M72')
             return 0
         command = "G10 L20 P0 Z{}".format(self.z_offset)
         ACTION.CALL_MDI_WAIT(command)
-        command = "G1 Z10 F{}".format(self.search_vel)
+        command = "G1 Z{} F{}".format(self.z_clearance, self.search_vel)
         ACTION.CALL_MDI_WAIT(command)
         ACTION.CALL_MDI('M72')
         return 1

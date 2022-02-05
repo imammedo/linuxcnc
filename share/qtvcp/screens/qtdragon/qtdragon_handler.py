@@ -862,7 +862,9 @@ class HandlerClass:
         max_probe = self.w.lineEdit_max_probe.text()
         search_vel = self.w.lineEdit_search_vel.text()
         probe_vel = self.w.lineEdit_probe_vel.text()
-        rtn = ACTION.TOUCHPLATE_TOUCHOFF(search_vel, probe_vel, max_probe, z_offset)
+        probe_latch_return = self.w.lineEdit_probe_latch_return.text()
+        probe_z_clearance = self.w.lineEdit_probe_z_clearance.text()
+        rtn = ACTION.TOUCHPLATE_TOUCHOFF(search_vel, probe_vel, max_probe, z_offset, probe_latch_return, probe_z_clearance)
         if rtn == 0:
             self.add_status("Touchoff routine is already running")
 

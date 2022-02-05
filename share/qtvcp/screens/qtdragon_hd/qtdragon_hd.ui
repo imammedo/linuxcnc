@@ -4120,6 +4120,240 @@ TO FILE</string>
                       </widget>
                      </item>
                      <item>
+                      <widget class="QWidget" name="widget_probe_latch_return" native="true">
+                       <layout class="QHBoxLayout" name="horizontalLayout_46">
+                        <property name="spacing">
+                         <number>4</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QLabel" name="label_71">
+                          <property name="sizePolicy">
+                           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                           </sizepolicy>
+                          </property>
+                          <property name="minimumSize">
+                           <size>
+                            <width>180</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>180</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="toolTip">
+                           <string>Step off distance after search stage</string>
+                          </property>
+                          <property name="text">
+                           <string>PROBE STEP OFF</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLineEdit" name="lineEdit_probe_latch_return">
+                          <property name="sizePolicy">
+                           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                           </sizepolicy>
+                          </property>
+                          <property name="minimumSize">
+                           <size>
+                            <width>60</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>60</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="maxLength">
+                           <number>8</number>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                          <property name="readOnly">
+                           <bool>false</bool>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="lbl_probe_latch_return_units">
+                          <property name="sizePolicy">
+                           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                           </sizepolicy>
+                          </property>
+                          <property name="minimumSize">
+                           <size>
+                            <width>60</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>60</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="text">
+                           <string>MM/MIN</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                          <property name="wordWrap">
+                           <bool>false</bool>
+                          </property>
+                          <property name="indent">
+                           <number>0</number>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QWidget" name="widget_probe_z_clearance" native="true">
+                       <layout class="QHBoxLayout" name="horizontalLayout_46">
+                        <property name="spacing">
+                         <number>4</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QLabel" name="label_72">
+                          <property name="sizePolicy">
+                           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                           </sizepolicy>
+                          </property>
+                          <property name="minimumSize">
+                           <size>
+                            <width>180</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>180</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="toolTip">
+                           <string>Probe clearance after probe</string>
+                          </property>
+                          <property name="text">
+                           <string>PROBE CLEARANCE</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLineEdit" name="lineEdit_probe_z_clearance">
+                          <property name="sizePolicy">
+                           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                           </sizepolicy>
+                          </property>
+                          <property name="minimumSize">
+                           <size>
+                            <width>60</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>60</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="maxLength">
+                           <number>8</number>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                          <property name="readOnly">
+                           <bool>false</bool>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="lbl_probe_z_clearance_units">
+                          <property name="sizePolicy">
+                           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                           </sizepolicy>
+                          </property>
+                          <property name="minimumSize">
+                           <size>
+                            <width>60</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="maximumSize">
+                           <size>
+                            <width>60</width>
+                            <height>30</height>
+                           </size>
+                          </property>
+                          <property name="text">
+                           <string>MM/MIN</string>
+                          </property>
+                          <property name="alignment">
+                           <set>Qt::AlignCenter</set>
+                          </property>
+                          <property name="wordWrap">
+                           <bool>false</bool>
+                          </property>
+                          <property name="indent">
+                           <number>0</number>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                     <item>
                       <widget class="QWidget" name="widget_max_probe" native="true">
                        <layout class="QHBoxLayout" name="horizontalLayout_47">
                         <property name="spacing">

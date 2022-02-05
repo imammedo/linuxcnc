@@ -69,7 +69,8 @@ class HandlerClass:
         self.unit_label_list = ["ts_height", "tp_height", "zoffset_units", "max_probe_units"]
         self.lineedit_list = ["work_height", "touch_height", "sensor_height", "laser_x", "laser_y",
                               "sensor_x", "sensor_y", "camera_x", "camera_y",
-                              "search_vel", "probe_vel", "max_probe", "eoffset_count"]
+                              "search_vel", "probe_vel", "probe_latch_return", "probe_z_clearance",
+                              "max_probe", "eoffset_count"]
         self.onoff_list = ["frame_program", "frame_tool", "frame_offsets", "frame_dro", "frame_override"]
         self.axis_a_list = ["label_axis_a", "dro_axis_a", "action_zero_a", "axistoolbutton_a",
                             "action_home_a", "widget_jog_angular", "widget_increments_angular",
@@ -183,6 +184,8 @@ class HandlerClass:
         self.w.lineEdit_sensor_height.setText(str(self.w.PREFS_.getpref('Sensor Height', 40, float, 'CUSTOM_FORM_ENTRIES')))
         self.w.lineEdit_search_vel.setText(str(self.w.PREFS_.getpref('Search Velocity', 40, float, 'CUSTOM_FORM_ENTRIES')))
         self.w.lineEdit_probe_vel.setText(str(self.w.PREFS_.getpref('Probe Velocity', 10, float, 'CUSTOM_FORM_ENTRIES')))
+        self.w.lineEdit_probe_latch_return.setText(str(self.w.PREFS_.getpref('Probe step off', 1, float, 'CUSTOM_FORM_ENTRIES')))
+        self.w.lineEdit_probe_z_clearance.setText(str(self.w.PREFS_.getpref('Probe clearance', 10, float, 'CUSTOM_FORM_ENTRIES')))
         self.w.lineEdit_max_probe.setText(str(self.w.PREFS_.getpref('Max Probe', 10, float, 'CUSTOM_FORM_ENTRIES')))
         self.w.lineEdit_eoffset_count.setText(str(self.w.PREFS_.getpref('Eoffset count', 0, int, 'CUSTOM_FORM_ENTRIES')))
         self.w.chk_eoffsets.setChecked(self.w.PREFS_.getpref('External offsets', False, bool, 'CUSTOM_FORM_ENTRIES'))
@@ -214,6 +217,8 @@ class HandlerClass:
         self.w.PREFS_.putpref('Sensor Height', self.w.lineEdit_sensor_height.text().encode('utf-8'), float, 'CUSTOM_FORM_ENTRIES')
         self.w.PREFS_.putpref('Search Velocity', self.w.lineEdit_search_vel.text().encode('utf-8'), float, 'CUSTOM_FORM_ENTRIES')
         self.w.PREFS_.putpref('Probe Velocity', self.w.lineEdit_probe_vel.text().encode('utf-8'), float, 'CUSTOM_FORM_ENTRIES')
+        self.w.PREFS_.putpref('Probe step off', self.w.lineEdit_probe_latch_return.text().encode('utf-8'), float, 'CUSTOM_FORM_ENTRIES')
+        self.w.PREFS_.putpref('Probe clearance', self.w.lineEdit_probe_z_clearance.text().encode('utf-8'), float, 'CUSTOM_FORM_ENTRIES')
         self.w.PREFS_.putpref('Max Probe', self.w.lineEdit_max_probe.text().encode('utf-8'), float, 'CUSTOM_FORM_ENTRIES')
         self.w.PREFS_.putpref('Eoffset count', self.w.lineEdit_eoffset_count.text().encode('utf-8'), int, 'CUSTOM_FORM_ENTRIES')
         self.w.PREFS_.putpref('External offsets', self.w.chk_eoffsets.isChecked(), bool, 'CUSTOM_FORM_ENTRIES')
@@ -915,7 +920,9 @@ class HandlerClass:
         max_probe = self.w.lineEdit_max_probe.text()
         search_vel = self.w.lineEdit_search_vel.text()
         probe_vel = self.w.lineEdit_probe_vel.text()
-        rtn = ACTION.TOUCHPLATE_TOUCHOFF(search_vel, probe_vel, max_probe, z_offset)
+        probe_latch_return = self.w.lineEdit_probe_latch_return.text()
+        probe_z_clearance = self.w.lineEdit_probe_z_clearance.text()
+        rtn = ACTION.TOUCHPLATE_TOUCHOFF(search_vel, probe_vel, max_probe, z_offset, probe_latch_return, probe_z_clearance)
         if rtn == 0:
             self.add_status("Touchoff routine is already running")
 

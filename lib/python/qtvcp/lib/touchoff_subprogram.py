@@ -63,22 +63,26 @@ class TouchOffSubprog(QObject):
         ACTION.CALL_MDI("G10 L20 P0 Z0")
         ACTION.CALL_MDI("G91")
         command = "G38.2 Z-{} F{}".format(self.max_travel, self.search_vel)
-        if ACTION.CALL_MDI_WAIT(command, 10) == -1:
+        timeout = self.max_travel / self.search_vel * 60 * 1.1
+        if ACTION.CALL_MDI_WAIT(command, timeout) == -1:
             ACTION.CALL_MDI('M72')
             return 0
-        command = "G1 Z{}".format(self.latch_return)
-        if ACTION.CALL_MDI_WAIT(command) == -1:
+        command = "G1 Z{} F{}".format(self.latch_return, self.search_vel)
+        timeout =  self.latch_return / self.search_vel * 60 * 1.1
+        if ACTION.CALL_MDI_WAIT(command, timeout) == -1:
             ACTION.CALL_MDI('M72')
             return 0
         ACTION.CALL_MDI("G4 P0.5")
         command = "G38.2 Z-{} F{}".format(self.probe_distance, self.probe_vel)
-        if ACTION.CALL_MDI_WAIT(command, 10) == -1:
+        timeout =  self.probe_distance / self.probe_vel * 60 * 1.1
+        if ACTION.CALL_MDI_WAIT(command, timeout) == -1:
             ACTION.CALL_MDI('M72')
             return 0
         command = "G10 L20 P0 Z{}".format(self.z_offset)
         ACTION.CALL_MDI_WAIT(command)
         command = "G1 Z{} F{}".format(self.z_clearance, self.search_vel)
-        ACTION.CALL_MDI_WAIT(command)
+        timeout =  self.z_clearance / self.search_vel * 60 * 1.1
+        ACTION.CALL_MDI_WAIT(command, timeout)
         ACTION.CALL_MDI('M72')
         return 1
 
